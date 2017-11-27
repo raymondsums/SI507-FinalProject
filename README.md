@@ -25,17 +25,17 @@ Here are response values I am interested in
 Use Yelp API to gather the same info as above, and then use Plotly to visualize all the businesses, and then compare the visualization between two or more locations. 
 
 Some of the milestones I have identified :
-[]Identify API used
-[]Read API documentation
-[]Create Git repository and link to Git repo
-[]Write first draft of README.MD
-[]Create secret_data.py file
-[]Complete OAuth1 Authentication used by Yelp API
-[]Set up caching system to save data
-[]Define classes
-[][Create a __repr__ method and __contains__ method
-[]Write 15 test methods and at least 2 subclasses of unittest.
-[]Create 2 database tables with at least 4 rows of data, and 1 relationship existing between them.
-[]Revise README.MD
-[]Generate requirements.txt
-[]Test edge cases and test run code
+*Identify API used
+*Read API documentation
+*Create Git repository and link to Git repo
+*Write first draft of README.MD
+*Create secret_data.py file
+*Complete OAuth1 Authentication used by Yelp API
+*Set up caching system to save data
+*Define classes
+*Create a __repr__ method and __contains__ method
+*Write 15 test methods and at least 2 subclasses of unittest.
+*Create 2 database tables with at least 4 rows of data, and 1 relationship existing between them.
+*Revise README.MD
+*Generate requirements.txt
+*Test edge cases and test run code
