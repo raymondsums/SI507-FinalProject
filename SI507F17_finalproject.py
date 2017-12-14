@@ -227,8 +227,7 @@ for i in get_search_data(bearer_token):
         pass
     res_01 = insert_info(business_dict['ID'],business_dict['Name'],business_dict['Price'],business_dict['Address'],business_dict['City'],conn,cur)
     res_02 = insert_hours(business_dict['ID'],business_dict['Open_Now'],business_dict['Monday'],business_dict['Tuesday'],business_dict['Wednesday'],business_dict['Thursday'],business_dict['Friday'],business_dict['Saturday'],business_dict['Sunday'])
-    res_03 = insert_ratings(count,business_dict['Review_Count'],business_dict['Rating'])
-    count+=1
+    res_03 = insert_ratings(business_dict['ID'],business_dict['Review_Count'],business_dict['Rating'])
 
 
 cur.execute("SELECT Name, Price FROM Restaurant_Info")
