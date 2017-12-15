@@ -108,15 +108,6 @@ def get_search_data(bearer_token, term= search_term(), location=user_location())
         set_in_data_cache(ident, data)
         return data
 
-def get_business_data(bearer_token, business_id):
-    ident = business_id
-    data = get_from_cache(ident, CACHE_DICTION)
-    if data:
-        return data
-    else:
-        business_path = BUSINESS_PATH + business_id
-        return request(API_HOST, business_path, bearer_token)
-
 REQUEST_TOKEN_URL = 'https://api.yelp.com/oauth2/token'
 baseurl = "https://api.yelp.com/v3/businesses/search"
 
@@ -154,39 +145,28 @@ def load_cache():
 
 try:
  	conn = psycopg2.connect("dbname='{0}' user='{1}'".format(db_name, db_user))
- 	print("Success connecting to database...")
 except:
- 	print("Unable to connect to database. Check server and credentials...")
  	sys.exit(1)
 
 cur = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
 
 cur.execute("DROP TABLE IF EXISTS Restaurant_Info")
-cur.execute("DROP TABLE IF EXISTS Restaurant_Hours")
 cur.execute("DROP TABLE IF EXISTS Restaurant_Ratings")
 
 cur.execute("CREATE TABLE IF NOT EXISTS Restaurant_Info(ID VARCHAR PRIMARY KEY, Name VARCHAR(64), Price VARCHAR, Address TEXT, City TEXT)")
-cur.execute("CREATE TABLE IF NOT EXISTS Restaurant_Hours(ID VARCHAR PRIMARY KEY, Open_Now TEXT, Monday VARCHAR, Tuesday VARCHAR, Wednesday VARCHAR, Thursday VARCHAR, Friday VARCHAR, Saturday VARCHAR, Sunday VARCHAR)")
 cur.execute("CREATE TABLE IF NOT EXISTS Restaurant_Ratings(ID VARCHAR PRIMARY KEY, Review_Count INTEGER,Rating INTEGER)")
-print('Setup database complete...')
 
 def insert_info(business_id,business_name,business_price,business_address,city,conn,cur):
     sql = """INSERT INTO Restaurant_Info(ID, Name, Price, Address, City) VALUES (%s, %s, %s, %s, %s)"""
     cur.execute(sql,(business_id,business_name,business_price,business_address,city))
     return business_id
 
-def insert_hours(business_id,open_now,day0,day1,day2,day3,day4,day5,day6):
-    sql = """INSERT INTO Restaurant_Hours(ID, Open_Now, Monday, Tuesday, Wednesday, Thursday, Friday, Saturday, Sunday) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)"""
-    cur.execute(sql,(business_id,open_now,day0,day1,day2,day3,day4,day5,day6))
-    return open_now
-
 def insert_ratings(business_id,review_count,business_rating):
     sql = """INSERT INTO Restaurant_Ratings(ID, Review_Count, Rating) VALUES (%s, %s, %s)"""
     cur.execute(sql,(business_id,review_count,business_rating))
-    return business_rating
+    return business_id
 
 business_dict = {}
-count = 1
 for i in get_search_data(bearer_token):
     business_dict['ID'] = i['id']
     business_dict['Name'] = i['name']
@@ -201,32 +181,8 @@ for i in get_search_data(bearer_token):
         business_dict['City'] = i['city']
     except:
         business_dict['City'] = 'No City Info'
-    # try:
-    #     business_dict['Open_Now'] = (get_business_data(bearer_token,i['id'])['hours']['is_open_now'])
-    # except:
-    #     business_dict['Open_Now'] = "No Info"
-    # try:
-    #     for i in get_business_data(bearer_token,i['id'])['hours'][0]['open']:
-    #         if i['day'] == 0:
-    #             business_dict['Monday'] = (i['start'] + " - " + i['end'])
-    #         if i['day'] == 1:
-    #             business_dict['Tuesday'] = (i['start'] + " - " + i['end'])
-    #         if i['day'] == 2:
-    #             business_dict['Wednesday'] = (i['start'] + " - " + i['end'])
-    #         if i['day'] == 3:
-    #             business_dict['Thursday'] = (i['start'] + " - " + i['end'])
-    #         if i['day'] == 4:
-    #             business_dict['Friday'] = (i['start'] + " - " + i['end'])
-    #         if i['day'] == 5:
-    #             business_dict['Saturday'] = (i['start'] + " - " + i['end'])
-    #         if i['day'] == 6:
-    #             business_dict['Sunday'] = (i['start'] + " - " + i['end'])
-    # except:
-    #     pass
     res_01 = insert_info(business_dict['ID'],business_dict['Name'],business_dict['Price'],business_dict['Address'],business_dict['City'],conn,cur)
-    # res_02 = insert_hours(business_dict['ID'],business_dict['Open_Now'],business_dict['Monday'],business_dict['Tuesday'],business_dict['Wednesday'],business_dict['Thursday'],business_dict['Friday'],business_dict['Saturday'],business_dict['Sunday'])
-    res_03 = insert_ratings(business_dict['ID'],business_dict['Review_Count'],business_dict['Rating'])
-
+    res_02 = insert_ratings(business_dict['ID'],business_dict['Review_Count'],business_dict['Rating'])
 
 cur.execute("SELECT Restaurant_Info.Name, Restaurant_Info.Price, Restaurant_Ratings.Rating, Restaurant_Ratings.Review_Count, Restaurant_Info.Address FROM Restaurant_Info INNER JOIN Restaurant_Ratings ON Restaurant_Info.ID = Restaurant_Ratings.ID")
 conn.commit()
@@ -245,11 +201,13 @@ def viz():
     var4 = str(rng())[1:-2]
     var5 = str(rng())[1:-2]
     print(var1,var2,var3,var4,var5)
-    return  '''<h1> {} </h1>
-    <h1> {} </h1>
-    <h1> {} </h1>
-    <h1> {} </h1>
-    <h1> {} </h1>'''.format(var1,var2,var3,var4,var5)
+    return  '''
+    <h1> Recommendations: </h1>
+    <h2> {} </h2>
+    <h2> {} </h2>
+    <h2> {} </h2>
+    <h2> {} </h2>
+    <h2> {} </h2>'''.format(var1,var2,var3,var4,var5)
 
 if __name__ == '__main__':
     app.run()
