@@ -163,6 +163,7 @@ cur = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
 
 cur.execute("DROP TABLE IF EXISTS Restaurant_Info")
 cur.execute("DROP TABLE IF EXISTS Restaurant_Hours")
+cur.execute("DROP TABLE IF EXISTS Restaurant_Ratings")
 
 cur.execute("CREATE TABLE IF NOT EXISTS Restaurant_Info(ID VARCHAR PRIMARY KEY, Name VARCHAR(64), Price VARCHAR, Address TEXT, City TEXT)")
 cur.execute("CREATE TABLE IF NOT EXISTS Restaurant_Hours(ID VARCHAR PRIMARY KEY, Open_Now TEXT, Monday VARCHAR, Tuesday VARCHAR, Wednesday VARCHAR, Thursday VARCHAR, Friday VARCHAR, Saturday VARCHAR, Sunday VARCHAR)")
@@ -184,10 +185,7 @@ def insert_ratings(business_id,review_count,business_rating):
     cur.execute(sql,(business_id,review_count,business_rating))
     return business_rating
 
-print("Initializing...")
-
 business_dict = {}
-print("Fetching data...")
 count = 1
 for i in get_search_data(bearer_token):
     business_dict['ID'] = i['id']
@@ -203,83 +201,56 @@ for i in get_search_data(bearer_token):
         business_dict['City'] = i['city']
     except:
         business_dict['City'] = 'No City Info'
-    try:
-        business_dict['Open_Now'] = (get_business_data(bearer_token,i['id'])['hours']['is_open_now'])
-    except:
-        business_dict['Open_Now'] = "No Info"
-    try:
-        for i in get_business_data(bearer_token,i['id'])['hours'][0]['open']:
-            if i['day'] == 0:
-                business_dict['Monday'] = (i['start'] + " - " + i['end'])
-            if i['day'] == 1:
-                business_dict['Tuesday'] = (i['start'] + " - " + i['end'])
-            if i['day'] == 2:
-                business_dict['Wednesday'] = (i['start'] + " - " + i['end'])
-            if i['day'] == 3:
-                business_dict['Thursday'] = (i['start'] + " - " + i['end'])
-            if i['day'] == 4:
-                business_dict['Friday'] = (i['start'] + " - " + i['end'])
-            if i['day'] == 5:
-                business_dict['Saturday'] = (i['start'] + " - " + i['end'])
-            if i['day'] == 6:
-                business_dict['Sunday'] = (i['start'] + " - " + i['end'])
-    except:
-        pass
+    # try:
+    #     business_dict['Open_Now'] = (get_business_data(bearer_token,i['id'])['hours']['is_open_now'])
+    # except:
+    #     business_dict['Open_Now'] = "No Info"
+    # try:
+    #     for i in get_business_data(bearer_token,i['id'])['hours'][0]['open']:
+    #         if i['day'] == 0:
+    #             business_dict['Monday'] = (i['start'] + " - " + i['end'])
+    #         if i['day'] == 1:
+    #             business_dict['Tuesday'] = (i['start'] + " - " + i['end'])
+    #         if i['day'] == 2:
+    #             business_dict['Wednesday'] = (i['start'] + " - " + i['end'])
+    #         if i['day'] == 3:
+    #             business_dict['Thursday'] = (i['start'] + " - " + i['end'])
+    #         if i['day'] == 4:
+    #             business_dict['Friday'] = (i['start'] + " - " + i['end'])
+    #         if i['day'] == 5:
+    #             business_dict['Saturday'] = (i['start'] + " - " + i['end'])
+    #         if i['day'] == 6:
+    #             business_dict['Sunday'] = (i['start'] + " - " + i['end'])
+    # except:
+    #     pass
     res_01 = insert_info(business_dict['ID'],business_dict['Name'],business_dict['Price'],business_dict['Address'],business_dict['City'],conn,cur)
-    res_02 = insert_hours(business_dict['ID'],business_dict['Open_Now'],business_dict['Monday'],business_dict['Tuesday'],business_dict['Wednesday'],business_dict['Thursday'],business_dict['Friday'],business_dict['Saturday'],business_dict['Sunday'])
+    # res_02 = insert_hours(business_dict['ID'],business_dict['Open_Now'],business_dict['Monday'],business_dict['Tuesday'],business_dict['Wednesday'],business_dict['Thursday'],business_dict['Friday'],business_dict['Saturday'],business_dict['Sunday'])
     res_03 = insert_ratings(business_dict['ID'],business_dict['Review_Count'],business_dict['Rating'])
 
 
-cur.execute("SELECT Name, Price FROM Restaurant_Info")
+cur.execute("SELECT Restaurant_Info.Name, Restaurant_Info.Price, Restaurant_Ratings.Rating, Restaurant_Ratings.Review_Count, Restaurant_Info.Address FROM Restaurant_Info INNER JOIN Restaurant_Ratings ON Restaurant_Info.ID = Restaurant_Ratings.ID")
 conn.commit()
-# shortlist = (cur.fetchall())
+shortlist = (cur.fetchall())
 
 def rng():
-    return random.randint(1,len(shortlist)-1)
-
-# print("Deciding...")
-# rng_1 = rng()
-# choice_1 = shortlist[rng_1]
-# shortlist.pop(rng_1)
-# rng_2 = rng()
-# choice_2 = shortlist[rng_2]
-# shortlist.pop(rng_2)
-# rng_3 = rng()
-# choice_3 = shortlist[rng_3]
-# shortlist.pop(rng_3)
-# rng_4 = rng()
-# choice_4 = shortlist[rng_4]
-# shortlist.pop(rng_4)
-# rng_5 = rng()
-# choice_5 = shortlist[rng_5]
-# # shortlist.pop(rng_5)
-# print("Operation completed")
-# print(choice_1,choice_2,choice_3,choice_4,choice_5)
+    return shortlist[random.randint(1,len(shortlist)-1)]
 
 app = Flask(__name__)
 
-@app.route('/')
-def restaurant_search():
-    shortlist = (cur.fetchall())
-    rng_1 = rng()
-    choice_1 = shortlist[rng_1]
-    shortlist.pop(rng_1)
-    rng_2 = rng()
-    choice_2 = shortlist[rng_2]
-    shortlist.pop(rng_2)
-    rng_3 = rng()
-    choice_3 = shortlist[rng_3]
-    shortlist.pop(rng_3)
-    rng_4 = rng()
-    choice_4 = shortlist[rng_4]
-    shortlist.pop(rng_4)
-    rng_5 = rng()
-    choice_5 = shortlist[rng_5]
-    shortlist.pop(rng_5)
-    return render_template('values.html',first=choice_1,second=choice_2,third=choice_3,forth=choice_4,fifth=choice_5)
+@app.route('/viz')
+def viz():
+    var1 = str(rng())[1:-2]
+    var2 = str(rng())[1:-2]
+    var3 = str(rng())[1:-2]
+    var4 = str(rng())[1:-2]
+    var5 = str(rng())[1:-2]
+    print(var1,var2,var3,var4,var5)
+    return  '''<h1> {} </h1>
+    <h1> {} </h1>
+    <h1> {} </h1>
+    <h1> {} </h1>
+    <h1> {} </h1>'''.format(var1,var2,var3,var4,var5)
 
 if __name__ == '__main__':
     app.run()
 
-# Referred to Yelp Fusion API Github Page at https://yelp.com/developers
-# Referred to hartleybrody/fb-messenger-bot on GitHub
